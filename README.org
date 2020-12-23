@@ -1,0 +1,16 @@
+#+title: Screenshot.el
+#+author: tecosaur
+
+Ever wanted to take a screenshot of some code to share on /<insert IM platform
+of choice here>/?
++ Yes: well then this package may just be for you!
++ No: you're lying
+
+[[file:screenshot.png]]
+
+With this package you can trivially convert a selected region of code to a
+screenshot (no fiddly cropping required), with nothing but Emacs itself.
+
+If you add in ~xclip~, this will happily copy a screenshot straight to your
+clipboard. Provide ~imagemagick~ too and you can get rounded borders and a drop
+shadow 😉.
