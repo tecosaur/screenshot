@@ -55,6 +55,7 @@ Run after hardcoded setup, but before the screenshot is captured."
 (defvar screenshot--region-end nil
   "End of the region forming the screenshot.")
 
+;;;###autoload
 (defun screenshot (beg end)
   "Take a screenshot of the current region or buffer.
 
