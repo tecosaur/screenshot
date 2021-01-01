@@ -56,22 +56,54 @@ Run after hardcoded setup, but before the screenshot is captured."
   "End of the region forming the screenshot.")
 
 ;;;###autoload
-(defun screenshot (beg end)
+(defun screenshot (beg end &optional upload-text)
   "Take a screenshot of the current region or buffer.
 
 Region included in screenshot is the active selection, interactively,
-or given by BEG and END.  Buffer is used if region spans 0-1 characters."
+or given by BEG and END.  Buffer is used if region spans 0-1 characters.
+
+When a universal argument is given, UPLOAD-TEXT is non-nil.
+Then the text of the region/buffer is uploaded, and the URL is copied to clipboard."
   (interactive (if (region-active-p)
-                   (list (region-beginning) (region-end))
-                 (list (point-min) (point-max))))
-  (deactivate-mark)
+                   (list (region-beginning) (region-end) (when current-prefix-arg t))
+                 (list (point-min) (point-max) (when current-prefix-arg t))))
 
-  (screenshot--set-screenshot-region beg end)
+  (if upload-text
+      (screenshot-text-upload beg end)
 
-  (setq screenshot--tmp-file
-        (make-temp-file "screenshot-" nil ".png"))
+    (deactivate-mark)
 
-  (screenshot-transient))
+    (screenshot--set-screenshot-region beg end)
+
+    (setq screenshot--tmp-file
+          (make-temp-file "screenshot-" nil ".png"))
+
+    (screenshot-transient)))
+
+(defun screenshot-text-upload (beg end)
+  "Upload the region from BEG to END, and copy the upload URL to the clipboard."
+  (message "Uploading text...")
+  (let ((url
+         (funcall screenshot-text-upload-function beg end)))
+    (gui-select-text url)
+    (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
+
+(defun screenshot-ixio-upload (beg end)
+  "Upload the region from BEG to END to ix.io, and return the URL."
+  (let ((output (generate-new-buffer "ixio")) url)
+    (shell-command-on-region beg end
+                             (format "curl -F 'ext:1=%s' -F 'f:1=<-' ix.io 2>/dev/null"
+                                     (file-name-extension (buffer-file-name)))
+                             output)
+    (setq url (string-trim-right (with-current-buffer output (buffer-string))))
+    (kill-buffer output)
+    url))
+
+(defvar screenshot-text-upload-function #'screenshot-ixio-upload
+  "Function to use to upload text.
+
+Must take a start and end position for the current buffer, and
+return a URL.")
 
 ;;; Screenshot capturing
 
