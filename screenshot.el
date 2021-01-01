@@ -5,7 +5,7 @@
 ;; Author: TEC <http://github/tecosaur>
 ;; Maintainer: TEC <http://github/tecosaur>
 ;; Homepage: https://github.com/tecosaur/screenshot
-;; Version: 0.0.1
+;; Version: 0.1.0
 ;; Keywords: convenience, screenshot
 ;; Package-Requires: ((emacs "27") (transient "0.2.0") (posframe "0.8.3"))
 
