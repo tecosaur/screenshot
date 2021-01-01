@@ -164,6 +164,8 @@ and the line number of the first line of the region."
       (current-buffer))))
 
 (defun screenshot--narrowed-clone-buffer (beg end)
+  "Create a clone of the current buffer, narrowed to the region from BEG to END.
+This buffer then then set up to be used for a screenshot."
   (with-current-buffer (clone-indirect-buffer " *screenshot-clone" nil t)
     (narrow-to-region beg end)
     (screenshot--setup-buffer)
@@ -174,6 +176,10 @@ and the line number of the first line of the region."
 ;;; Screenshot processing
 
 (defun screenshot--process ()
+  "Perform the screenshot process.
+
+Create a buffer for the screenshot, use `x-export-frames' to create the image,
+and process it."
   (setq screenshot--buffer
         (if screenshot-text-only-p
             (screenshot--format-text-only-buffer screenshot--region-beginning screenshot--region-end)
@@ -242,7 +248,10 @@ Must take a single argument, the file name, and operate in-place."
 ;;; Screenshot actions
 
 (defmacro screenshot--def-action (name &rest body)
+  "Define an action that may be performed on a screenshot from the transient interface.
+BODY is executed after `screenshot-process' is called."
   `(defun ,(intern (concat "screenshot-" name)) (&optional args)
+     "Screenshot action to be performed from the transient interface."
      (interactive
       (list (transient-args 'screenshot-transient)))
      (screenshot--process)
