@@ -122,6 +122,8 @@ and the line number of the first line of the region."
   ;; include indentation if `beg' is where indentation starts
   (let ((s (string-trim-right (buffer-substring beg end))))
     (with-current-buffer (setq screenshot--buffer screenshot--text-only-buffer)
+      (buffer-face-set :family screenshot-font-family
+                       :height (* 10 screenshot-font-size))
       (erase-buffer)
       (insert s)
       (indent-rigidly (point-min) (point-max)
@@ -133,6 +135,8 @@ and the line number of the first line of the region."
   (with-current-buffer (clone-indirect-buffer " *screenshot-clone" nil t)
     (narrow-to-region beg end)
     (screenshot--setup-buffer)
+    (buffer-face-set :family screenshot-font-family
+                     :height (* 10 screenshot-font-size))
     (current-buffer)))
 
 ;;; Screenshot processing
@@ -142,6 +146,7 @@ and the line number of the first line of the region."
         (if screenshot-text-only-p
             (screenshot--format-text-only-buffer screenshot--region-beginning screenshot--region-end)
           (screenshot--narrowed-clone-buffer screenshot--region-beginning screenshot--region-end)))
+
   (let ((frame (posframe-show
                 screenshot--buffer
                 :position (point-min)
@@ -269,7 +274,9 @@ Note: you have to define this yourself, there is no default."
    (screenshot--set-line-numbers-p)
    (screenshot--set-relative-line-numbers-p)
    (screenshot--set-text-only-p)
-   (screenshot--set-truncate-lines-p)]
+   (screenshot--set-truncate-lines-p)
+   (screenshot--set-font-family)
+   (screenshot--set-font-size)]
   ["Frame"
    (screenshot--set-border-width)
    (screenshot--set-radius)
@@ -324,6 +331,22 @@ Note: you have to define this yourself, there is no default."
  "-T" "truncate-lines-p" "Truncate lines beyond the screenshot width"
  'boolean nil
  (not screenshot-truncate-lines-p))
+
+(screenshot--define-infix
+ "-ff" "font-family" "Font family to use"
+ 'string (symbol-name (font-get (face-attribute 'default :font) :family))
+ (if (fboundp #'counsel-fonts)
+     (ivy-read "Font: " (delete-dups (font-family-list))
+               :preselect screenshot-font-family
+               :require-match t
+               :history 'counsel-fonts-history
+               :caller 'counsel-fonts)
+   (completing-read "Font: " (delete-dups (font-family-list)))))
+
+(screenshot--define-infix
+ "-fs" "font-size" "Font size (pt)"
+ 'number 14
+ (read-number "Font size in pt: " screenshot-font-size))
 
 ;;;; Frame
 
