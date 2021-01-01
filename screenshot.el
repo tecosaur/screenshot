@@ -97,7 +97,7 @@ and the line number of the first line of the region."
   (setq screenshot--region-beginning beg
         screenshot--region-end end
         screenshot--first-line-number (line-number-at-pos beg)
-        screenshot--total-lines (- (line-number-at-pos end) (line-number-at-pos beg))))
+        screenshot--total-lines (- (line-number-at-pos end) (line-number-at-pos beg) -1)))
 
 (defun screenshot--setup-buffer ()
   "Modify the current buffer to make it appropriate for screenshotting."
