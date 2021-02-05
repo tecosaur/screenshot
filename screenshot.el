@@ -50,6 +50,78 @@ Run after hardcoded setup, but before the screenshot is captured."
   :type 'hook
   :group 'screenshot)
 
+;;; Default screenshot parameters
+;;;; Code
+
+(defcustom screenshot-line-numbers-p t
+  "Show line numbers."
+  :type 'boolean
+  :group 'screenshot)
+
+(defcustom screenshot-relative-line-numbers-p nil
+  "Relative line numbers within the screenshot."
+  :type 'boolean
+  :group 'screenshot)
+
+(defcustom screenshot-text-only-p t
+  "Use a text-only version of the buffer."
+  :type 'boolean
+  :group 'screenshot)
+
+(defcustom screenshot-truncate-lines-p nil
+  "Truncate lines beyond the screenshot width."
+  :type 'boolean
+  :group 'screenshot)
+
+;;;; Frame
+
+(defcustom screenshot-border-width 20
+  "Border width in pixels."
+  :type 'integer
+  :group 'screenshot)
+
+(defcustom screenshot-radius 10
+  "Rounded corner radius."
+  :type 'integer
+  :group 'screenshot)
+
+(defcustom screenshot-min-width 40
+  "Minimum width, in columns."
+  :type 'integer
+  :group 'screenshot)
+
+(defcustom screenshot-max-width 120
+  "Maximum width, in columns."
+  :type 'integer
+  :group 'screenshot)
+
+;;;; Shadow
+
+(defcustom screenshot-shadow-radius 12
+  "Radius of the shadow in pixels."
+  :type 'integer
+  :group 'screenshot)
+
+(defcustom screenshot-shadow-intensity 100
+  "Intensity of the shadow."
+  :type 'integer
+  :group 'screenshot)
+
+(defcustom screenshot-shadow-color "#333"
+  "Color of the shadow."
+  :type 'color
+  :group 'screenshot)
+
+(defcustom screenshot-shadow-offset-horizontal 8
+  "Shadow horizontal offset."
+  :type 'integer
+  :group 'screenshot)
+
+(defcustom screenshot-shadow-offset-vertical 5
+  "Shadow vertical offset."
+  :type 'integer
+  :group 'screenshot)
+
 (defvar screenshot--region-beginning nil
   "Start of the region forming the screenshot.")
 (defvar screenshot--region-end nil
@@ -306,71 +378,71 @@ Note: you have to define this yourself, there is no default."
 
 (screenshot--define-infix
  "-l" "line-numbers-p" "Show line numbers"
- 'boolean t
+ 'boolean screenshot-line-numbers-p
  (not screenshot-line-numbers-p))
 
 (screenshot--define-infix
  "-L" "relative-line-numbers-p" "Relative line numbers within the screenshot"
- 'boolean nil
+ 'boolean screenshot-relative-line-numbers-p
  (not screenshot-relative-line-numbers-p))
 
 (screenshot--define-infix
  "-t" "text-only-p" "Use a text-only version of the buffer"
- 'boolean t
+ 'boolean screenshot-text-only-p
  (not screenshot-text-only-p))
 
 (screenshot--define-infix
  "-T" "truncate-lines-p" "Truncate lines beyond the screenshot width"
- 'boolean nil
+ 'boolean screenshot-truncate-lines-p
  (not screenshot-truncate-lines-p))
 
 ;;;; Frame
 
 (screenshot--define-infix
  "-b" "border-width" "Border width in pixels"
- 'integer 20
+ 'integer screenshot-border-width
  (read-number "Border width in px: " screenshot-border-width))
 
 (screenshot--define-infix
  "-r" "radius" "Rounded corner radius"
- 'integer 10
+ 'integer screenshot-radius
  (read-number "Border radius in px: " screenshot-radius))
 
 (screenshot--define-infix
  "-w" "min-width" "Minimum width, in columns"
- 'integer 40
+ 'integer screenshot-min-width
  (read-number "Minimum width (columns): " screenshot-min-width))
 
 (screenshot--define-infix
- "-W" "max-width" "Minimum width, in columns"
- 'integer 120
+ "-W" "max-width" "Maximum width, in columns"
+ 'integer screenshot-max-width
  (read-number "Maximum width (columns): " screenshot-max-width))
 
 ;;;; Shadow
 
 (screenshot--define-infix
  "-s" "shadow-radius" "Radius of the shadow in pixels"
- 'integer 12
+ 'integer screenshot-shadow-radius
  (read-number "Shadow width in px: " screenshot-shadow-radius))
 
 (screenshot--define-infix
  "-i" "shadow-intensity" "Intensity of the shadow"
- 'integer 100
+ 'integer screenshot-shadow-intensity
  (read-number "Shadow width in px: " screenshot-shadow-intensity))
 
 (screenshot--define-infix
  "-c" "shadow-color" "Color of the shadow"
- 'color "#333"
+ 'color screenshot-shadow-color
  (read-string "Shadow color: " screenshot-shadow-color))
 
 (screenshot--define-infix
  "-x" "shadow-offset-horizontal" "Shadow horizontal offset"
- 'integer 8
+ 'integer screenshot-shadow-offset-horizontal
  (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
 
 (screenshot--define-infix
  "-y" "shadow-offset-vertical" "Shadow vertical offset"
- 'integer 5
+ 'integer screenshot-shadow-offset-vertical
  (read-number "Shadow vertical offset in px: " screenshot-shadow-offset-vertical))
 
 (provide 'screenshot)
