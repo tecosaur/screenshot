@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 TEC
 
 ;; Author: TEC <http://github/tecosaur>
-;; Maintainer: TEC <http://github/tecosaur>
+;; Maintainer: TEC <tec@tecosaur.com>
 ;; Homepage: https://github.com/tecosaur/screenshot
 ;; Version: 0.1.0
 ;; Keywords: convenience, screenshot
@@ -351,11 +351,10 @@ Note: you have to define this yourself, there is no default."
        :reader (lambda (&rest _) ,@reader))))
 
 ;;; Screenshot parameters
-;;;; Code
 
 (screenshot--define-infix
  "-l" "line-numbers-p" "Show line numbers"
- 'boolean t
+ 'boolean nil
  (not screenshot-line-numbers-p))
 
 (screenshot--define-infix
@@ -365,7 +364,7 @@ Note: you have to define this yourself, there is no default."
 
 (screenshot--define-infix
  "-t" "text-only-p" "Use a text-only version of the buffer"
- 'boolean t
+ 'boolean nil
  (not screenshot-text-only-p))
 
 (screenshot--define-infix
