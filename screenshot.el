@@ -70,14 +70,10 @@ Then the text of the region/buffer is uploaded, and the URL is copied to clipboa
 
   (if upload-text
       (screenshot-text-upload beg end)
-
     (deactivate-mark)
-
     (screenshot--set-screenshot-region beg end)
-
     (setq screenshot--tmp-file
           (make-temp-file "screenshot-" nil ".png"))
-
     (screenshot-transient)))
 
 (defun screenshot-text-upload (beg end)
