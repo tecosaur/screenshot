@@ -306,7 +306,7 @@ Note: you have to define this yourself, there is no default."
 
 ;;; Screenshot transient
 
-(define-transient-command screenshot-transient ()
+(transient-define-prefix screenshot-transient ()
   ["Code"
    (screenshot--set-line-numbers-p)
    (screenshot--set-relative-line-numbers-p)
