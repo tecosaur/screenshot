@@ -419,8 +419,8 @@ Note: you have to define this yourself, there is no default."
 
 (screenshot--define-infix
  "-i" "shadow-intensity" "Intensity of the shadow"
- 'integer 100
- (read-number "Shadow width in px: " screenshot-shadow-intensity))
+ 'integer 80
+ (read-number "Shadow intensity: " screenshot-shadow-intensity))
 
 (screenshot--define-infix
  "-c" "shadow-color" "Color of the shadow"
@@ -429,7 +429,7 @@ Note: you have to define this yourself, there is no default."
 
 (screenshot--define-infix
  "-x" "shadow-offset-horizontal" "Shadow horizontal offset"
- 'integer 8
+ 'integer -8
  (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
 
 (screenshot--define-infix
