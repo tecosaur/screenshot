@@ -89,7 +89,7 @@ Then the text of the region/buffer is uploaded, and the URL is copied to clipboa
   (let ((output (generate-new-buffer "ixio")) url)
     (shell-command-on-region beg end
                              (format "curl -F 'ext:1=%s' -F 'f:1=<-' ix.io 2>/dev/null"
-                                     (file-name-extension (buffer-file-name)))
+                                     (file-name-extension (or (buffer-file-name) " .txt")))
                              output)
     (setq url (string-trim-right (with-current-buffer output (buffer-string))))
     (kill-buffer output)
