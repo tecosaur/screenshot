@@ -402,7 +402,7 @@ Note: you have to define this yourself, there is no default."
  (read-number "Minimum width (columns): " screenshot-min-width))
 
 (screenshot--define-infix
- "-W" "max-width" "Minimum width, in columns"
+ "-W" "max-width" "Maximum width, in columns"
  'integer 120
  (read-number "Maximum width (columns): " screenshot-max-width))
 
