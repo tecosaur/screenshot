@@ -74,7 +74,7 @@ Then the text of the region/buffer is uploaded, and the URL is copied to clipboa
     (screenshot--set-screenshot-region beg end)
     (setq screenshot--tmp-file
           (make-temp-file "screenshot-" nil ".png"))
-    (screenshot-transient)))
+    (call-interactively #'screenshot-transient)))
 
 (defun screenshot-text-upload (beg end)
   "Upload the region from BEG to END, and copy the upload URL to the clipboard."
@@ -238,15 +238,15 @@ Must take a single argument, the file name, and operate in-place."
                     screenshot-shadow-offset-horizontal
                     screenshot-shadow-offset-vertical))))
       (unless (string= result "")
-        (error "Could not apply imagemagick commants to image:\n%s" result))))
+        (error "Could not apply imagemagick commands to image:\n%s" result))))
   (run-hook-with-args 'screenshot-post-process-hook file))
 
 ;;; Screenshot actions
 
 (defmacro screenshot--def-action (name &rest body)
-  "Define an action that may be performed on a screenshot from the transient interface.
+  "Define action NAME to be performed from the transient interface.
 BODY is executed after `screenshot-process' is called."
-  `(defun ,(intern (concat "screenshot-" name)) (&optional args)
+  `(defun ,(intern (concat "screenshot-" name)) (&optional _args)
      "Screenshot action to be performed from the transient interface."
      (interactive
       (list (transient-args 'screenshot-transient)))
@@ -331,7 +331,9 @@ Note: you have to define this yourself, there is no default."
    ("c" "Copy" screenshot-copy)
    ("u" "Upload" screenshot-upload)])
 
-(defmacro screenshot--define-infix (key name description type default &rest reader)
+(defmacro screenshot--define-infix (key name description type default
+					&rest reader)
+  "Define infix with KEY, NAME, DESCRIPTION, TYPE, DEFAULT and READER as arguments."
   `(progn
      (defcustom ,(intern (concat "screenshot-" name)) ,default
        ,description
@@ -367,6 +369,10 @@ Note: you have to define this yourself, there is no default."
  "-T" "truncate-lines-p" "Truncate lines beyond the screenshot width"
  'boolean nil
  (not screenshot-truncate-lines-p))
+
+(declare-function counsel-fonts "ext:counsel-fonts")
+
+(declare-function ivy-read "ext:ivy-read")
 
 (screenshot--define-infix
  "-ff" "font-family" "Font family to use"
