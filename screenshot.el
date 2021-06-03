@@ -54,6 +54,8 @@ Run after hardcoded setup, but before the screenshot is captured."
   "Start of the region forming the screenshot.")
 (defvar screenshot--region-end nil
   "End of the region forming the screenshot.")
+(defvar screenshot--tmp-file nil
+  "Temporal image file.")
 
 ;;;###autoload
 (defun screenshot (beg end &optional upload-text)
@@ -76,6 +78,12 @@ Then the text of the region/buffer is uploaded, and the URL is copied to clipboa
           (make-temp-file "screenshot-" nil ".png"))
     (call-interactively #'screenshot-transient)))
 
+(defvar screenshot-text-upload-function #'screenshot-ixio-upload
+  "Function to use to upload text.
+
+Must take a start and end position for the current buffer, and
+return a URL.")
+
 (defun screenshot-text-upload (beg end)
   "Upload the region from BEG to END, and copy the upload URL to the clipboard."
   (message "Uploading text...")
@@ -95,13 +103,12 @@ Then the text of the region/buffer is uploaded, and the URL is copied to clipboa
     (kill-buffer output)
     url))
 
-(defvar screenshot-text-upload-function #'screenshot-ixio-upload
-  "Function to use to upload text.
-
-Must take a start and end position for the current buffer, and
-return a URL.")
-
 ;;; Screenshot capturing
+(defvar screenshot--first-line-number nil
+  "Number of shots's first line.")
+
+(defvar screenshot--total-lines nil
+  "Number of shots's total lines.")
 
 (defun screenshot--set-screenshot-region (beg end)
   "Use the region from BEG to END to determine the relevant region to capture.
@@ -145,6 +152,12 @@ and the line number of the first line of the region."
     (current-buffer))
   "A text-only buffer for use in creating screenshots.")
 
+(defvar screenshot-font-family nil
+  "Font family.")
+
+(defvar screenshot-font-size nil
+  "Font size.")
+
 (defun screenshot--format-text-only-buffer (beg end)
   "Insert text from BEG to END in the current buffer, into the screenshot text-only buffer."
   ;; include indentation if `beg' is where indentation starts
@@ -170,6 +183,20 @@ This buffer then then set up to be used for a screenshot."
     (current-buffer)))
 
 ;;; Screenshot processing
+(defvar screenshot-text-only-p nil
+  "If non-nil, use a text only version of buffer.")
+(defvar screenshot-border-width nil
+  "Border width.")
+(defvar screenshot-min-width nil
+  "Minimum width.")
+(defvar screenshot-max-width nil
+  "Maximum width.")
+(defvar screenshot-truncate-lines-p nil
+  "If non-nil, truncate lines.")
+(defvar screenshot-line-numbers-p nil
+  "If non-nil, include line numbers in image.")
+(defvar screenshot-relative-line-numbers-p nil
+  "If non-nil, include relative line numbers in image.")
 
 (defun screenshot--process ()
   "Perform the screenshot process.
@@ -214,6 +241,19 @@ and process it."
 Must take a single argument, the file name, and operate in-place."
   :type 'function
   :group 'screenshot)
+
+(defvar screenshot-radius nil
+  "Radius of border.")
+(defvar screenshot-shadow-radius nil
+  "Shadow of radius.")
+(defvar screenshot-shadow-color nil
+  "Color of shadow.")
+(defvar screenshot-shadow-intensity nil
+  "Shadow intensity.")
+(defvar screenshot-shadow-offset-horizontal nil
+  "Horizontal offset.")
+(defvar screenshot-shadow-offset-vertical nil
+  "Vertical offset.")
 
 (defun screenshot--post-process (file)
   "Apply any image post-processing to FILE."
