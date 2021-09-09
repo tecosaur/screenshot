@@ -257,6 +257,8 @@ and the line number of the first line of the region."
               line-spacing 0.1)
   (when (and (featurep 'hl-line) hl-line-mode)
     (hl-line-mode -1))
+  (when (and (featurep 'solaire-mode) solaire-mode)
+    (solaire-mode -1))
   (run-hooks 'screenshot-buffer-creation-hook))
 
 (defvar screenshot--text-only-buffer
