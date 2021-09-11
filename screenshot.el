@@ -112,7 +112,9 @@ Run after hardcoded setup, but before the screenshot is captured."
 
   (screenshot--define-infix
    "-ff" "font-family" "Font family to use"
-   'string (symbol-name (font-get (face-attribute 'default :font) :family))
+   'string (let ((font (face-attribute 'default :font)))
+             (if (eq font 'unspecified) "monospace"
+               (symbol-name (font-get font :family))))
    (if (fboundp #'counsel-fonts)
        (ivy-read "Font: " (delete-dups (font-family-list))
                  :preselect screenshot-font-family
