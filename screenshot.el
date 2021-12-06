@@ -68,7 +68,7 @@ Run after hardcoded setup, but before the screenshot is captured."
 
 ;;; Screenshot parameters
 
-(eval-when-compile
+(eval-and-compile
   (defmacro screenshot--define-infix (key name description type default
                                           &rest reader)
     "Define infix with KEY, NAME, DESCRIPTION, TYPE, DEFAULT and READER as arguments."
@@ -367,7 +367,7 @@ Must take a single argument, the file name, and operate in-place."
 
 ;;; Screenshot actions
 
-(eval-when-compile
+(eval-and-compile
   (defmacro screenshot--def-action (name &rest body)
     "Define action NAME to be performed from the transient interface.
 BODY is executed after `screenshot-process' is called."
