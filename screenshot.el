@@ -192,13 +192,23 @@ Then the text of the region/buffer is uploaded, and the URL is copied to clipboa
                    (list (region-beginning) (region-end) (when current-prefix-arg t))
                  (list (point-min) (point-max) (when current-prefix-arg t))))
 
-  (if upload-text
-      (screenshot-text-upload beg end)
-    (deactivate-mark)
-    (screenshot--set-screenshot-region beg end)
-    (setq screenshot--tmp-file
-          (make-temp-file "screenshot-" nil ".png"))
-    (call-interactively #'screenshot-transient)))
+  (unless screenshot-max-width
+    (defun longest-line (m l)
+      (cond ((null (car l)) m)
+            ((> (car l) m) (longest-line (car l) (cdr l)))
+            (t (longest-line m (cdr l)))))
+
+    (setq screenshot-min-width (truncate (* 1.3 (longest-line 0 (mapcar #'length (split-string (buffer-substring-no-properties beg end) "\n"))))))
+
+    (if upload-text
+        (screenshot-text-upload beg end)
+      (deactivate-mark)
+      (screenshot--set-screenshot-region beg end)
+      (setq screenshot--tmp-file
+            (make-temp-file "screenshot-" nil ".png"))
+      (call-interactively #'screenshot-transient))
+
+    (setq screenshot-max-width nil)))
 
 (defvar screenshot-text-upload-function #'screenshot-ixio-upload
   "Function to use to upload text.
@@ -346,11 +356,11 @@ Must take a single argument, the file name, and operate in-place."
     (let ((result
            (shell-command-to-string
             (format "convert '%1$s' \\( +clone -alpha extract \\
-\\( -size %2$dx%2$d xc:black -draw 'fill white circle %2$d,%2$d %2$d,0' -write mpr:arc +delete \\) \\
-\\( mpr:arc \\) -gravity northwest -composite \\
-\\( mpr:arc -flip \\) -gravity southwest -composite \\
-\\( mpr:arc -flop \\) -gravity northeast -composite \\
-\\( mpr:arc -rotate 180 \\) -gravity southeast -composite \\) \\
+                                        \\( -size %2$dx%2$d xc:black -draw 'fill white circle %2$d,%2$d %2$d,0' -write mpr:arc +delete \\) \\
+                                        \\( mpr:arc \\) -gravity northwest -composite \\
+                                        \\( mpr:arc -flip \\) -gravity southwest -composite \\
+                                        \\( mpr:arc -flop \\) -gravity northeast -composite \\
+                                        \\( mpr:arc -rotate 180 \\) -gravity southeast -composite \\) \\
 -alpha off -compose CopyOpacity -composite -compose over \\
 \\( +clone -background '%3$s' -shadow %4$dx%5$d+%6$d+%7$d \\) \\
 +swap -background none -layers merge '%1$s'"
