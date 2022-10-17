@@ -299,6 +299,19 @@ This buffer then then set up to be used for a screenshot."
                      :height (* 10 screenshot-font-size))
     (current-buffer)))
 
+(defun screenshot--max-line-length (&optional buffer)
+  "Find the maximum line length in BUFFER."
+  (let ((buffer (or buffer (current-buffer)))
+        (max-line 0))
+    (with-current-buffer buffer
+      (save-excursion
+        (goto-char (point-min))
+        (dotimes (line (1+ (count-lines (point-min) (point-max))))
+          (setq max-line (max max-line
+                              (- (line-end-position line)
+                                 (line-beginning-position line)))))))
+    max-line))
+
 ;;; Screenshot processing
 
 (defun screenshot--process ()
@@ -311,16 +324,20 @@ and process it."
             (screenshot--format-text-only-buffer screenshot--region-beginning screenshot--region-end)
           (screenshot--narrowed-clone-buffer screenshot--region-beginning screenshot--region-end)))
 
-  (let ((frame (posframe-show
-                screenshot--buffer
-                :position (point-min)
-                :internal-border-width screenshot-border-width
-                :min-width screenshot-min-width
-                :width screenshot-max-width
-                :min-height screenshot--total-lines
-                :lines-truncate screenshot-truncate-lines-p
-                :poshandler #'posframe-poshandler-point-bottom-left-corner
-                :hidehandler #'posframe-hide)))
+  (let* (before-make-frame-hook
+         delete-frame-functions
+         (frame (posframe-show
+                 screenshot--buffer
+                 :position (point-min)
+                 :internal-border-width screenshot-border-width
+                 :width (max screenshot-min-width
+                             (min screenshot-max-width
+                                  (screenshot--max-line-length
+                                   screenshot--buffer)))
+                 :min-height screenshot--total-lines
+                 :lines-truncate screenshot-truncate-lines-p
+                 :poshandler #'posframe-poshandler-point-bottom-left-corner
+                 :hidehandler #'posframe-hide)))
     (with-current-buffer screenshot--buffer
       (setq-local display-line-numbers screenshot-line-numbers-p)
       (when screenshot-text-only-p
