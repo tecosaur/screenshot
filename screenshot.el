@@ -187,7 +187,8 @@ Region included in screenshot is the active selection, interactively,
 or given by BEG and END.  Buffer is used if region spans 0-1 characters.
 
 When a universal argument is given, UPLOAD-TEXT is non-nil.
-Then the text of the region/buffer is uploaded, and the URL is copied to clipboard."
+Then the text of the region/buffer is uploaded, and the URL is copied
+to the clipboard."
   (interactive (if (region-active-p)
                    (list (region-beginning) (region-end) (when current-prefix-arg t))
                  (list (point-min) (point-max) (when current-prefix-arg t))))
@@ -251,6 +252,10 @@ and the line number of the first line of the region."
         screenshot--first-line-number (line-number-at-pos beg)
         screenshot--total-lines (- (line-number-at-pos end) (line-number-at-pos beg) -1)))
 
+(declare-function solaire-mode "ext:solaire-mode")
+
+(declare-function hl-line-mode "ext:hl-line")
+
 (defun screenshot--setup-buffer ()
   "Modify the current buffer to make it appropriate for screenshotting."
   (setq-local face-remapping-alist '((line-number-current-line line-number)
@@ -270,7 +275,7 @@ and the line number of the first line of the region."
   "A text-only buffer for use in creating screenshots.")
 
 (defun screenshot--format-text-only-buffer (beg end)
-  "Insert text from BEG to END in the current buffer, into the screenshot text-only buffer."
+  "Insert text from BEG to END in the current buffer, into the screenshot buffer."
   ;; include indentation if `beg' is where indentation starts
   (let ((s (string-trim-right (buffer-substring beg end))))
     (with-current-buffer (setq screenshot--buffer screenshot--text-only-buffer)
