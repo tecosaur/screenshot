@@ -50,6 +50,8 @@ Run after hardcoded setup, but before the screenshot is captured."
   :type 'hook
   :group 'screenshot)
 
+;;; Generated variables
+
 (defvar screenshot--region-beginning nil
   "Start of the region forming the screenshot.")
 (defvar screenshot--region-end nil
@@ -63,8 +65,6 @@ Run after hardcoded setup, but before the screenshot is captured."
 
 (defvar screenshot--total-lines nil
   "The total number of lines contained in the screenshot.")
-
-;;; Generated variables
 
 ;;; Screenshot parameters
 
@@ -84,98 +84,98 @@ Run after hardcoded setup, but before the screenshot is captured."
          :key ,key
          :description ,description
          :argument ,(concat "--" name)
-         :reader (lambda (&rest _) ,@reader))))
+         :reader (lambda (&rest _) ,@reader)))))
 
-  (screenshot--define-infix
-   "-l" "line-numbers-p" "Show line numbers"
-   'boolean nil
-   (not screenshot-line-numbers-p))
+(screenshot--define-infix
+ "-l" "line-numbers-p" "Show line numbers"
+ 'boolean nil
+ (not screenshot-line-numbers-p))
 
-  (screenshot--define-infix
-   "-L" "relative-line-numbers-p" "Relative line numbers within the screenshot"
-   'boolean nil
-   (not screenshot-relative-line-numbers-p))
+(screenshot--define-infix
+ "-L" "relative-line-numbers-p" "Relative line numbers within the screenshot"
+ 'boolean nil
+ (not screenshot-relative-line-numbers-p))
 
-  (screenshot--define-infix
-   "-t" "text-only-p" "Use a text-only version of the buffer"
-   'boolean nil
-   (not screenshot-text-only-p))
+(screenshot--define-infix
+ "-t" "text-only-p" "Use a text-only version of the buffer"
+ 'boolean nil
+ (not screenshot-text-only-p))
 
-  (screenshot--define-infix
-   "-T" "truncate-lines-p" "Truncate lines beyond the screenshot width"
-   'boolean nil
-   (not screenshot-truncate-lines-p))
+(screenshot--define-infix
+ "-T" "truncate-lines-p" "Truncate lines beyond the screenshot width"
+ 'boolean nil
+ (not screenshot-truncate-lines-p))
 
-  (declare-function counsel-fonts "ext:counsel-fonts")
+(declare-function counsel-fonts "ext:counsel-fonts")
 
-  (declare-function ivy-read "ext:ivy-read")
+(declare-function ivy-read "ext:ivy-read")
 
-  (screenshot--define-infix
-   "-ff" "font-family" "Font family to use"
-   'string (let ((font (face-attribute 'default :font)))
-             (if (eq font 'unspecified) "monospace"
-               (symbol-name (font-get font :family))))
-   (if (fboundp #'counsel-fonts)
-       (ivy-read "Font: " (delete-dups (font-family-list))
-                 :preselect screenshot-font-family
-                 :require-match t
-                 :history 'counsel-fonts-history
-                 :caller 'counsel-fonts)
-     (completing-read "Font: " (delete-dups (font-family-list)))))
+(screenshot--define-infix
+ "-ff" "font-family" "Font family to use"
+ 'string (let ((font (face-attribute 'default :font)))
+           (if (eq font 'unspecified) "monospace"
+             (symbol-name (font-get font :family))))
+ (if (fboundp #'counsel-fonts)
+     (ivy-read "Font: " (delete-dups (font-family-list))
+               :preselect screenshot-font-family
+               :require-match t
+               :history 'counsel-fonts-history
+               :caller 'counsel-fonts)
+   (completing-read "Font: " (delete-dups (font-family-list)))))
 
-  (screenshot--define-infix
-   "-fs" "font-size" "Font size (pt)"
-   'number 14
-   (read-number "Font size in pt: " screenshot-font-size))
+(screenshot--define-infix
+ "-fs" "font-size" "Font size (pt)"
+ 'number 14
+ (read-number "Font size in pt: " screenshot-font-size))
 
 ;;;; Frame
 
-  (screenshot--define-infix
-   "-b" "border-width" "Border width in pixels"
-   'integer 20
-   (read-number "Border width in px: " screenshot-border-width))
+(screenshot--define-infix
+ "-b" "border-width" "Border width in pixels"
+ 'integer 20
+ (read-number "Border width in px: " screenshot-border-width))
 
-  (screenshot--define-infix
-   "-r" "radius" "Rounded corner radius"
-   'integer 10
-   (read-number "Border radius in px: " screenshot-radius))
+(screenshot--define-infix
+ "-r" "radius" "Rounded corner radius"
+ 'integer 10
+ (read-number "Border radius in px: " screenshot-radius))
 
-  (screenshot--define-infix
-   "-w" "min-width" "Minimum width, in columns"
-   'integer 40
-   (read-number "Minimum width (columns): " screenshot-min-width))
+(screenshot--define-infix
+ "-w" "min-width" "Minimum width, in columns"
+ 'integer 40
+ (read-number "Minimum width (columns): " screenshot-min-width))
 
-  (screenshot--define-infix
-   "-W" "max-width" "Maximum width, in columns"
-   'integer 120
-   (read-number "Maximum width (columns): " screenshot-max-width))
+(screenshot--define-infix
+ "-W" "max-width" "Maximum width, in columns"
+ 'integer 120
+ (read-number "Maximum width (columns): " screenshot-max-width))
 
 ;;;; Shadow
 
-  (screenshot--define-infix
-   "-s" "shadow-radius" "Radius of the shadow in pixels"
-   'integer 12
-   (read-number "Shadow width in px: " screenshot-shadow-radius))
+(screenshot--define-infix
+ "-s" "shadow-radius" "Radius of the shadow in pixels"
+ 'integer 12
+ (read-number "Shadow width in px: " screenshot-shadow-radius))
 
-  (screenshot--define-infix
-   "-i" "shadow-intensity" "Intensity of the shadow"
-   'integer 80
-   (read-number "Shadow intensity: " screenshot-shadow-intensity))
+(screenshot--define-infix
+ "-i" "shadow-intensity" "Intensity of the shadow"
+ 'integer 80
+ (read-number "Shadow intensity: " screenshot-shadow-intensity))
 
-  (screenshot--define-infix
-   "-c" "shadow-color" "Color of the shadow"
-   'color "#333"
-   (read-string "Shadow color: " screenshot-shadow-color))
+(screenshot--define-infix
+ "-c" "shadow-color" "Color of the shadow"
+ 'color "#333"
+ (read-string "Shadow color: " screenshot-shadow-color))
 
-  (screenshot--define-infix
-   "-x" "shadow-offset-horizontal" "Shadow horizontal offset"
-   'integer -8
-   (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
+(screenshot--define-infix
+ "-x" "shadow-offset-horizontal" "Shadow horizontal offset"
+ 'integer -8
+ (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
 
-  (screenshot--define-infix
-   "-y" "shadow-offset-vertical" "Shadow vertical offset"
-   'integer 5
-   (read-number "Shadow vertical offset in px: " screenshot-shadow-offset-vertical)))
+(screenshot--define-infix
+ "-y" "shadow-offset-vertical" "Shadow vertical offset"
+ 'integer 5
+ (read-number "Shadow vertical offset in px: " screenshot-shadow-offset-vertical))
 
 ;;; Main function
 
@@ -376,58 +376,58 @@ BODY is executed after `screenshot-process' is called."
        (interactive
         (list (transient-args 'screenshot-transient)))
        (screenshot--process)
-       ,@body))
+       ,@body)))
 
-  (screenshot--def-action
-   "save"
-   (rename-file
-    screenshot--tmp-file
-    (concat (file-name-sans-extension
-             (or (buffer-file-name)
-                 (expand-file-name "screenshot")))
-            ".png")
-    t)
-   (message "Screenshot saved"))
+(screenshot--def-action
+ "save"
+ (rename-file
+  screenshot--tmp-file
+  (concat (file-name-sans-extension
+           (or (buffer-file-name)
+               (expand-file-name "screenshot")))
+          ".png")
+  t)
+ (message "Screenshot saved"))
 
-  (screenshot--def-action
-   "save-as"
-   (rename-file
-    screenshot--tmp-file
-    (read-file-name "Save as: " (file-name-directory (or (buffer-file-name) default-directory)))
-    1)
-   (message "Screenshot saved"))
+(screenshot--def-action
+ "save-as"
+ (rename-file
+  screenshot--tmp-file
+  (read-file-name "Save as: " (file-name-directory (or (buffer-file-name) default-directory)))
+  1)
+ (message "Screenshot saved"))
 
-  (screenshot--def-action
-   "copy"
-   (call-process "xclip" nil nil nil
-                 "-selection" "clipboard"
-                 "-target" "image/png"
-                 "-in" screenshot--tmp-file)
-   (delete-file screenshot--tmp-file)
-   (message "Screenshot copied"))
+(screenshot--def-action
+ "copy"
+ (call-process "xclip" nil nil nil
+               "-selection" "clipboard"
+               "-target" "image/png"
+               "-in" screenshot--tmp-file)
+ (delete-file screenshot--tmp-file)
+ (message "Screenshot copied"))
 
-  (defcustom screenshot-upload-fn nil
-    "Function or string which provides a method to upload a file.
+(defcustom screenshot-upload-fn nil
+  "Function or string which provides a method to upload a file.
 If a function, it must take a filename and returns a URL to it.
 If a string, it is formatted with the file name, and run as a shell command.
 
 Note: you have to define this yourself, there is no default."
-    :type '(choice function string)
-    :group 'screenshot)
+  :type '(choice function string)
+  :group 'screenshot)
 
-  (screenshot--def-action
-   "upload"
-   (if (not screenshot-upload-fn)
-       (error "No upload function defined")
-     (message "Uploading...")
-     (let ((url
-            (pcase screenshot-upload-fn
-              ((pred functionp) (funcall screenshot-upload-fn screenshot--tmp-file))
-              ((pred stringp) (string-trim-right (shell-command-to-string (format screenshot-upload-fn screenshot--tmp-file))))
-              (_ (error "Upload function is not a function or string!")))))
-       (gui-select-text url)
-       (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
-   (delete-file screenshot--tmp-file)))
+(screenshot--def-action
+ "upload"
+ (if (not screenshot-upload-fn)
+     (error "No upload function defined")
+   (message "Uploading...")
+   (let ((url
+          (pcase screenshot-upload-fn
+            ((pred functionp) (funcall screenshot-upload-fn screenshot--tmp-file))
+            ((pred stringp) (string-trim-right (shell-command-to-string (format screenshot-upload-fn screenshot--tmp-file))))
+            (_ (error "Upload function is not a function or string!")))))
+     (gui-select-text url)
+     (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
+ (delete-file screenshot--tmp-file))
 
 ;;; Screenshot transient
 
