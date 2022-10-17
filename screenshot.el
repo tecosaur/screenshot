@@ -63,9 +63,6 @@ Run after hardcoded setup, but before the screenshot is captured."
 (defvar screenshot--first-line-number nil
   "The first line contained in the screenshot.")
 
-(defvar screenshot--total-lines nil
-  "The total number of lines contained in the screenshot.")
-
 ;;; Screenshot parameters
 
 (eval-when-compile
@@ -249,8 +246,7 @@ and the line number of the first line of the region."
       (setq end (line-end-position))))
   (setq screenshot--region-beginning beg
         screenshot--region-end end
-        screenshot--first-line-number (line-number-at-pos beg)
-        screenshot--total-lines (- (line-number-at-pos end) (line-number-at-pos beg) -1)))
+        screenshot--first-line-number (line-number-at-pos beg)))
 
 (declare-function solaire-mode "ext:solaire-mode")
 
@@ -310,11 +306,27 @@ This buffer then then set up to be used for a screenshot."
     (with-current-buffer buffer
       (save-excursion
         (goto-char (point-min))
-        (dotimes (line (1+ (count-lines (point-min) (point-max))))
+        (dotimes (line-1 (count-lines (point-min) (point-max)))
           (setq max-line (max max-line
-                              (- (line-end-position line)
-                                 (line-beginning-position line)))))))
+                              (- (line-end-position (1+ line-1))
+                                 (line-beginning-position (1+ line-1))))))))
     max-line))
+
+(defun screenshot--displayed-lines (&optional buffer)
+  "Count the number of (perhaps wrapped) lines displyed in BUFFER."
+  (with-current-buffer (or buffer (current-buffer))
+    (if screenshot-truncate-lines-p
+        (count-lines (point-min) (point-max))
+      (save-excursion
+        (goto-char (point-min))
+        (let ((displayed-lines 0))
+          (dotimes (line-1 (count-lines (point-min) (point-max)))
+            (setq displayed-lines
+                  (+ displayed-lines
+                     (max 1 (ceiling (- (line-end-position (1+ line-1))
+                                        (line-beginning-position (1+ line-1)))
+                                     screenshot-max-width)))))
+          displayed-lines)))))
 
 ;;; Screenshot processing
 
@@ -330,15 +342,21 @@ and process it."
 
   (let* (before-make-frame-hook
          delete-frame-functions
+         (width (max screenshot-min-width
+                     (min screenshot-max-width
+                          (screenshot--max-line-length
+                           screenshot--buffer))))
+         (height (screenshot--displayed-lines screenshot--buffer))
          (frame (posframe-show
                  screenshot--buffer
                  :position (point-min)
                  :internal-border-width screenshot-border-width
-                 :width (max screenshot-min-width
-                             (min screenshot-max-width
-                                  (screenshot--max-line-length
-                                   screenshot--buffer)))
-                 :min-height screenshot--total-lines
+                 :min-width width
+                 :width width
+                 :max-width width
+                 :min-height height
+                 :height height
+                 :max-height height
                  :lines-truncate screenshot-truncate-lines-p
                  :poshandler #'posframe-poshandler-point-bottom-left-corner
                  :hidehandler #'posframe-hide)))
