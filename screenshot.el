@@ -292,12 +292,16 @@ and the line number of the first line of the region."
 (defun screenshot--narrowed-clone-buffer (beg end)
   "Create a clone of the current buffer, narrowed to the region from BEG to END.
 This buffer then then set up to be used for a screenshot."
-  (with-current-buffer (clone-indirect-buffer " *screenshot-clone" nil t)
-    (narrow-to-region beg end)
-    (screenshot--setup-buffer)
-    (buffer-face-set :family screenshot-font-family
-                     :height (* 10 screenshot-font-size))
-    (current-buffer)))
+  (let ((hl (bound-and-true-p hl-line-mode)))
+    (when hl (hl-line-mode -1))
+    (prog1
+        (with-current-buffer (clone-indirect-buffer " *screenshot-clone" nil t)
+          (narrow-to-region beg end)
+          (screenshot--setup-buffer)
+          (buffer-face-set :family screenshot-font-family
+                           :height (* 10 screenshot-font-size))
+          (current-buffer))
+      (when hl (hl-line-mode 1)))))
 
 (defun screenshot--max-line-length (&optional buffer)
   "Find the maximum line length in BUFFER."
