@@ -115,13 +115,13 @@ Run after hardcoded setup, but before the screenshot is captured."
  'string (let ((font (face-attribute 'default :font)))
            (if (eq font 'unspecified) "monospace"
              (symbol-name (font-get font :family))))
- (if (fboundp #'counsel-fonts)
-     (ivy-read "Font: " (delete-dups (font-family-list))
-               :preselect screenshot-font-family
-               :require-match t
-               :history 'counsel-fonts-history
-               :caller 'counsel-fonts)
-   (completing-read "Font: " (delete-dups (font-family-list)))))
+ (completing-read
+  "Font: "
+  (mapcar
+   (lambda (f) (propertize f 'face (list :family f)))
+   ;; TODO strip non-ascii fonts
+   (delete-dups (font-family-list)))
+  nil t nil nil screenshot-font-family))
 
 (screenshot--define-infix
  "-fs" "font-size" "Font size (pt)"
