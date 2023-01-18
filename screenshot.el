@@ -68,111 +68,141 @@ Run after hardcoded setup, but before the screenshot is captured."
 (eval-when-compile
   (defmacro screenshot--define-infix (key name description type default
                                           &rest reader)
-    "Define infix with KEY, NAME, DESCRIPTION, TYPE, DEFAULT and READER as arguments."
+    "Define a defcustom screenshot-NAME and an associated transient infix setter.
+
+The new variable screenshot-NAME takes the default value DEFAULT,
+and is given the docstring DESCRIPTION, and declared to be of
+TYPE.
+
+The infix uses KEY and DESCRIPTION, modifies the variable
+screenshot-NAME, and is set by a reader function with body
+READER."
+    (declare (indent 5) (doc-string 3))
     `(progn
-       (defcustom ,(intern (concat "screenshot-" name)) ,default
+       (defcustom ,(intern (format "screenshot-%s" name)) ,default
          ,description
          :type ,type
          :group 'screenshot)
-       (transient-define-infix ,(intern (concat "screenshot--set-" name)) ()
-         "Set `screenshot--theme' from a popup buffer."
+       (transient-define-infix ,(intern (format "screenshot--set-%s" name)) ()
+         ,(format "Set `screenshot--%s' from a popup buffer." name)
          :class 'transient-lisp-variable
-         :variable ',(intern (concat "screenshot-" name))
+         :variable ',(intern (format "screenshot-%s" name))
          :key ,key
          :description ,description
-         :argument ,(concat "--" name)
+         :argument ,(format "--%s" name)
          :reader (lambda (&rest _) ,@reader)))))
 
 (screenshot--define-infix
- "-n" "line-numbers-p" "Show line numbers"
- 'boolean nil
- (not screenshot-line-numbers-p))
+    "-n" line-numbers-p
+    "Show line numbers"
+    'boolean nil
+  (not screenshot-line-numbers-p))
 
 (screenshot--define-infix
- "-r" "relative-line-numbers-p" "Relative line numbers within the screenshot"
- 'boolean nil
- (not screenshot-relative-line-numbers-p))
+    "-r" relative-line-numbers-p
+    "Relative line numbers within the screenshot"
+    'boolean nil
+  (not screenshot-relative-line-numbers-p))
 
 (screenshot--define-infix
- "-t" "text-only-p" "Use a text-only version of the buffer"
- 'boolean nil
- (not screenshot-text-only-p))
+    "-t" text-only-p
+    "Use a text-only version of the buffer"
+    'boolean nil
+  (not screenshot-text-only-p))
 
 (screenshot--define-infix
- "-x" "truncate-lines-p" "Truncate lines beyond the screenshot width"
- 'boolean nil
- (not screenshot-truncate-lines-p))
+    "-x" truncate-lines-p
+    "Truncate lines beyond the screenshot width"
+    'boolean nil
+  (not screenshot-truncate-lines-p))
+
+(screenshot--define-infix
+    "-i" remove-indent-p
+    "Remove indent in selection"
+    'boolean nil
+  (not screenshot-remove-indent-p))
 
 (declare-function counsel-fonts "ext:counsel-fonts")
 
 (declare-function ivy-read "ext:ivy-read")
 
 (screenshot--define-infix
- "-ff" "font-family" "Font family to use"
- 'string (let ((font (face-attribute 'default :font)))
-           (if (eq font 'unspecified) "monospace"
-             (symbol-name (font-get font :family))))
- (completing-read
-  "Font: "
-  (mapcar
-   (lambda (f) (propertize f 'face (list :family f)))
-   ;; TODO strip non-ascii fonts
-   (delete-dups (font-family-list)))
-  nil t nil nil screenshot-font-family))
+    "-ff" font-family
+    "Font family to use"
+    'string (let ((font (face-attribute 'default :font)))
+              (if (eq font 'unspecified) "monospace"
+                (symbol-name (font-get font :family))))
+  (completing-read
+   "Font: "
+   (mapcar
+    (lambda (f) (propertize f 'face (list :family f)))
+    ;; TODO strip non-ascii fonts
+    (delete-dups (font-family-list)))
+   nil t nil nil screenshot-font-family))
 
 (screenshot--define-infix
- "-fs" "font-size" "Font size (pt)"
- 'number 14
- (read-number "Font size in pt: " screenshot-font-size))
+    "-fs" font-size
+    "Font size (pt)"
+    'number 14
+  (read-number "Font size in pt: " screenshot-font-size))
 
 ;;;; Frame
 
 (screenshot--define-infix
- "-bw" "border-width" "Border width in pixels"
- 'integer 20
- (read-number "Border width in px: " screenshot-border-width))
+    "-bw" border-width
+    "Border width in pixels"
+    'integer 20
+  (read-number "Border width in px: " screenshot-border-width))
 
 (screenshot--define-infix
- "-br" "radius" "Rounded corner radius"
- 'integer 10
- (read-number "Border radius in px: " screenshot-radius))
+    "-br" radius
+    "Rounded corner radius"
+    'integer 10
+  (read-number "Border radius in px: " screenshot-radius))
 
 (screenshot--define-infix
- "-w" "min-width" "Minimum width, in columns"
- 'integer 40
- (read-number "Minimum width (columns): " screenshot-min-width))
+    "-w" min-width
+    "Minimum width, in columns"
+    'integer 40
+  (read-number "Minimum width (columns): " screenshot-min-width))
 
 (screenshot--define-infix
- "-W" "max-width" "Maximum width, in columns"
- 'integer 120
- (read-number "Maximum width (columns): " screenshot-max-width))
+    "-W" max-width
+    "Maximum width, in columns"
+    'integer 120
+  (read-number "Maximum width (columns): " screenshot-max-width))
 
 ;;;; Shadow
 
 (screenshot--define-infix
- "-sr" "shadow-radius" "Radius of the shadow in pixels"
- 'integer 12
- (read-number "Shadow width in px: " screenshot-shadow-radius))
+    "-sr" shadow-radius
+    "Radius of the shadow in pixels"
+    'integer 12
+  (read-number "Shadow width in px: " screenshot-shadow-radius))
 
 (screenshot--define-infix
- "-si" "shadow-intensity" "Intensity of the shadow"
- 'integer 80
- (read-number "Shadow intensity: " screenshot-shadow-intensity))
+    "-si" shadow-intensity
+    "Intensity of the shadow"
+    'integer 80
+  (read-number "Shadow intensity: " screenshot-shadow-intensity))
 
 (screenshot--define-infix
- "-sc" "shadow-color" "Color of the shadow"
- 'color "#333"
- (read-string "Shadow color: " screenshot-shadow-color))
+    "-sc" shadow-color
+    "Color of the shadow"
+    'color "#333"
+  (read-string "Shadow color: " screenshot-shadow-color))
 
 (screenshot--define-infix
- "-sx" "shadow-offset-horizontal" "Shadow horizontal offset"
- 'integer -8
- (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
+    "-sx" shadow-offset-horizontal
+    "Shadow horizontal offset"
+    'integer -8
+  (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
 
 (screenshot--define-infix
- "-sy" "shadow-offset-vertical" "Shadow vertical offset"
- 'integer 5
- (read-number "Shadow vertical offset in px: " screenshot-shadow-offset-vertical))
+    "-sy" shadow-offset-vertical
+    "Shadow vertical offset"
+    'integer 5
+  (read-number "Shadow vertical offset in px: " screenshot-shadow-offset-vertical))
 
 ;;; Main function
 
