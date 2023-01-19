@@ -405,25 +405,41 @@ Must take a single argument, the file name, and operate in-place."
   (when (or (> screenshot-radius 0)
             (> screenshot-shadow-radius 0))
     (let ((result
-           (shell-command-to-string
-            (format "convert '%1$s' \\( +clone -alpha extract \\
-\\( -size %2$dx%2$d xc:black -draw 'fill white circle %2$d,%2$d %2$d,0' -write mpr:arc +delete \\) \\
-\\( mpr:arc \\) -gravity northwest -composite \\
-\\( mpr:arc -flip \\) -gravity southwest -composite \\
-\\( mpr:arc -flop \\) -gravity northeast -composite \\
-\\( mpr:arc -rotate 180 \\) -gravity southeast -composite \\) \\
--alpha off -compose CopyOpacity -composite -compose over \\
-\\( +clone -background '%3$s' -shadow %4$dx%5$d+%6$d+%7$d \\) \\
-+swap -background none -layers merge '%1$s'"
-                    file
-                    screenshot-radius
-                    screenshot-shadow-color
-                    screenshot-shadow-intensity
-                    screenshot-shadow-radius
-                    screenshot-shadow-offset-horizontal
-                    screenshot-shadow-offset-vertical))))
-      (unless (string= result "")
-        (error "Could not apply imagemagick commands to image:\n%s" result))))
+           (apply #'call-process
+                  "convert"
+                  nil nil nil
+                  (delq
+                   nil
+                   (append
+                    (list file)
+                    (and (> screenshot-radius 0)
+                         (list "(" "+clone" "-alpha" "extract"
+                               "(" "-size" (format "%1$dx%1$d" screenshot-radius)
+                               "xc:black"
+                               "-draw" (format "fill white circle %1$d,%1$d %1$d,0"
+                                               screenshot-radius)
+                               "-write" "mpr:arc" "+delete" ")"
+                               "(" "mpr:arc" ")" "-gravity" "northwest" "-composite"
+                               "(" "mpr:arc" "-flip" ")" "-gravity" "southwest" "-composite"
+                               "(" "mpr:arc" "-flop" ")" "-gravity" "northeast" "-composite"
+                               "(" "mpr:arc" "-rotate" "180" ")" "-gravity" "southeast" "-composite" ")"
+                               "-alpha" "off"
+                               "-compose" "CopyOpacity"
+                               "-composite" "-compose" "over"))
+                    (and (> screenshot-shadow-radius 0)
+                         (list "(" "+clone" "-background" screenshot-shadow-color
+                               "-shadow" (format "%dx%d+%d+%d"
+                                                 screenshot-shadow-intensity
+                                                 screenshot-shadow-radius
+                                                 screenshot-shadow-offset-horizontal
+                                                 screenshot-shadow-offset-vertical)
+                               ")" "+swap"))
+                    (list
+                     "-background" "none"
+                     "-layers" "merge"
+                     file))))))
+      (unless (eq result 0)
+        (error "Could not apply imagemagick commands to image (exit code %d)" result))))
   (run-hook-with-args 'screenshot-post-process-hook file))
 
 ;;; Screenshot actions
