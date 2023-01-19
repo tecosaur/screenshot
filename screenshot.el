@@ -519,7 +519,8 @@ Note: you have to define this yourself, there is no default."
              ((pred stringp) (string-trim-right (shell-command-to-string (format screenshot-upload-fn screenshot--tmp-file))))
              (_ (error "Upload function is not a function or string!")))))
       (gui-select-text url)
-      (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
+      (message "Screenshot uploaded, link copied to clipboard (%s)"
+               (propertize url 'face 'link))))
   (delete-file screenshot--tmp-file))
 
 (defcustom screenshot-text-upload-fn #'screenshot-ixio-upload
@@ -554,7 +555,8 @@ return a URL."
                             (point-min) (point-max)))))
       (setq url (funcall screenshot-text-upload-fn (point-min) (point-max)))
       (gui-select-text url)
-      (message "Screenshot uploaded, link copied to clipboard (%s)" url))))
+      (message "Screenshot uploaded, link copied to clipboard (%s)"
+               (propertize url 'face 'link)))))
 
 ;;; Screenshot transient
 
