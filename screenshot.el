@@ -486,6 +486,19 @@ If BODY starts with :no-img then `screenshot--process' is not called."
   (delete-file screenshot--tmp-file)
   (message "Screenshot copied"))
 
+(screenshot--def-action text-copy
+  "Copy the current selection (BEG-END) as text to the clipboard."
+  :no-img
+  (let ((content (string-trim-right (buffer-substring beg end))))
+    (with-temp-buffer
+      (insert content)
+      (when screenshot-remove-indent-p
+        (indent-rigidly (point-min) (point-max)
+                        (- (indent-rigidly--current-indentation
+                            (point-min) (point-max)))))
+      (gui-select-text (buffer-substring-no-properties
+                        (point-min) (point-max))))))
+
 (defcustom screenshot-upload-fn nil
   "Function or string which provides a method to upload a file.
 If a function, it must take a filename and returns a URL to it.
@@ -573,7 +586,8 @@ return a URL."
     ("u" "Image" screenshot-upload)
     ("U" "Text" screenshot-text-upload)]
    ["Copy"
-    ("c" "Image" screenshot-copy)]])
+    ("c" "Image" screenshot-copy)
+    ("C" "Text" screenshot-text-copy)]])
 
 (provide 'screenshot)
 ;;; screenshot.el ends here
