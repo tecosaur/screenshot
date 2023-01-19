@@ -216,7 +216,6 @@ to the clipboard."
   (interactive (if (region-active-p)
                    (list (region-beginning) (region-end) (when current-prefix-arg t))
                  (list (point-min) (point-max) (when current-prefix-arg t))))
-
   (if upload-text
       (screenshot-text-upload beg end)
     (deactivate-mark)
@@ -224,41 +223,6 @@ to the clipboard."
     (setq screenshot--tmp-file
           (make-temp-file "screenshot-" nil ".png"))
     (call-interactively #'screenshot-transient)))
-
-(defvar screenshot-text-upload-function #'screenshot-ixio-upload
-  "Function to use to upload text.
-
-Must take a start and end position for the current buffer, and
-return a URL.")
-
-(defun screenshot-text-upload (beg end)
-  "Upload the region from BEG to END, and copy the upload URL to the clipboard."
-  (message "Uploading text...")
-  (screenshot--set-screenshot-region beg end)
-  (let ((content (string-trim-right
-                  (buffer-substring screenshot--region-beginning
-                                    screenshot--region-end)))
-        url)
-    (with-temp-buffer
-      (insert content)
-      (when screenshot-remove-indent-p
-        (indent-rigidly (point-min) (point-max)
-                        (- (indent-rigidly--current-indentation
-                            (point-min) (point-max)))))
-      (setq url (funcall screenshot-text-upload-function (point-min) (point-max)))
-      (gui-select-text url)
-      (message "Screenshot uploaded, link copied to clipboard (%s)" url))))
-
-(defun screenshot-ixio-upload (beg end)
-  "Upload the region from BEG to END to ix.io, and return the URL."
-  (let ((output (generate-new-buffer "ixio")) url)
-    (shell-command-on-region beg end
-                             (format "curl -F 'ext:1=%s' -F 'f:1=<-' ix.io 2>/dev/null"
-                                     (file-name-extension (or (buffer-file-name) " .txt")))
-                             output)
-    (setq url (string-trim-right (with-current-buffer output (buffer-string))))
-    (kill-buffer output)
-    url))
 
 ;;; Screenshot capturing
 
@@ -361,8 +325,8 @@ This buffer then then set up to be used for a screenshot."
 
 ;;; Screenshot processing
 
-(defun screenshot--process ()
-  "Perform the screenshot process.
+(defun screenshot--process (beg end)
+  "Perform the screenshot process on the region BEG to END.
 
 More specifically, this function will:
 - Create a buffer for the screenshot
@@ -370,10 +334,8 @@ More specifically, this function will:
 - Process the image"
   (let ((ss-buf
          (if screenshot-text-only-p
-             (screenshot--format-text-only-buffer
-              screenshot--region-beginning screenshot--region-end)
-           (screenshot--narrowed-clone-buffer
-            screenshot--region-beginning screenshot--region-end)))
+             (screenshot--format-text-only-buffer beg end)
+           (screenshot--narrowed-clone-buffer beg end)))
         (indent-level 0))
     (when screenshot-remove-indent-p
       (with-current-buffer ss-buf
@@ -467,43 +429,62 @@ Must take a single argument, the file name, and operate in-place."
 ;;; Screenshot actions
 
 (eval-when-compile
-  (defmacro screenshot--def-action (name &rest body)
+  (defmacro screenshot--def-action (name &optional docstring &rest body)
     "Define action NAME to be performed from the transient interface.
-BODY is executed after `screenshot-process' is called."
-    `(defun ,(intern (concat "screenshot-" name)) (&optional _args)
-       "Screenshot action to be performed from the transient interface."
+This defines a function screenshot-NAME with DOCSTRING which executes BODY after
+determining (and binding) the region beg/end and calling `screenshot--process'.
+If BODY starts with :no-img then `screenshot--process' is not called."
+    (declare (doc-string 2) (indent defun))
+    `(defun ,(intern (format "screenshot-%s" name)) (beg end)
+       ,(concat
+         (if (stringp docstring)
+             (concat docstring "\n\n")
+           (push docstring body)
+           "")
+         "Screenshot action to be performed from the transient interface.")
        (interactive
-        (list (transient-args 'screenshot-transient)))
-       (screenshot--process)
+        (progn
+          (unless (eq transient-current-command 'screenshot-transient)
+            (if (region-active-p)
+                (screenshot--set-screenshot-region (region-beginning) (region-end))
+              (screenshot--set-screenshot-region
+               (line-beginning-position) (line-end-position)))
+            ,@(and (not (eq (car body) :no-img))
+                   '((setq screenshot--tmp-file
+                           (make-temp-file "screenshot-" nil ".png")))))
+          (list screenshot--region-beginning screenshot--region-end)))
+       ,@(if (eq (car body) :no-img)
+             (progn (pop body) nil)
+           '((screenshot--process beg end)))
        ,@body)))
 
-(screenshot--def-action
- "save"
- (rename-file
-  screenshot--tmp-file
-  (concat (file-name-sans-extension
-           (or (buffer-file-name)
-               (expand-file-name "screenshot")))
-          ".png")
-  t)
- (message "Screenshot saved"))
+(screenshot--def-action save
+  "Save the current selection (BEG-END) as an image."
+  (rename-file
+   screenshot--tmp-file
+   (concat (file-name-sans-extension
+            (or (buffer-file-name)
+                (expand-file-name "screenshot")))
+           ".png")
+   t)
+  (message "Screenshot saved"))
 
-(screenshot--def-action
- "save-as"
- (rename-file
-  screenshot--tmp-file
-  (read-file-name "Save as: " (file-name-directory (or (buffer-file-name) default-directory)))
-  1)
- (message "Screenshot saved"))
+(screenshot--def-action save-as
+  "Save the current selection (BEG-END) as an image in the specified location."
+  (rename-file
+   screenshot--tmp-file
+   (read-file-name "Save as: " (file-name-directory (or (buffer-file-name) default-directory)))
+   1)
+  (message "Screenshot saved"))
 
-(screenshot--def-action
- "copy"
- (call-process "xclip" nil nil nil
-               "-selection" "clipboard"
-               "-target" "image/png"
-               "-in" screenshot--tmp-file)
- (delete-file screenshot--tmp-file)
- (message "Screenshot copied"))
+(screenshot--def-action copy
+  "Copy the current selection (BEG-END) as an image to the clipboard."
+  (call-process "xclip" nil nil nil
+                "-selection" "clipboard"
+                "-target" "image/png"
+                "-in" screenshot--tmp-file)
+  (delete-file screenshot--tmp-file)
+  (message "Screenshot copied"))
 
 (defcustom screenshot-upload-fn nil
   "Function or string which provides a method to upload a file.
@@ -514,19 +495,53 @@ Note: you have to define this yourself, there is no default."
   :type '(choice function string)
   :group 'screenshot)
 
-(screenshot--def-action
- "upload"
- (if (not screenshot-upload-fn)
-     (error "No upload function defined")
-   (message "Uploading...")
-   (let ((url
-          (pcase screenshot-upload-fn
-            ((pred functionp) (funcall screenshot-upload-fn screenshot--tmp-file))
-            ((pred stringp) (string-trim-right (shell-command-to-string (format screenshot-upload-fn screenshot--tmp-file))))
-            (_ (error "Upload function is not a function or string!")))))
-     (gui-select-text url)
-     (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
- (delete-file screenshot--tmp-file))
+(screenshot--def-action upload
+  "Upload an image of the current selection (BEG-END) via `screenshot-upload-fn'."
+  (if (not screenshot-upload-fn)
+      (error "No upload function defined")
+    (message "Uploading...")
+    (let ((url
+           (pcase screenshot-upload-fn
+             ((pred functionp) (funcall screenshot-upload-fn screenshot--tmp-file))
+             ((pred stringp) (string-trim-right (shell-command-to-string (format screenshot-upload-fn screenshot--tmp-file))))
+             (_ (error "Upload function is not a function or string!")))))
+      (gui-select-text url)
+      (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
+  (delete-file screenshot--tmp-file))
+
+(defcustom screenshot-text-upload-fn #'screenshot-ixio-upload
+  "Function to use to upload text.
+
+Must take a start and end position for the current buffer, and
+return a URL."
+  :type 'function
+  :group 'screenshot)
+
+(defun screenshot-ixio-upload (beg end)
+  "Upload the region from BEG to END to ix.io, and return the URL."
+  (let ((output (generate-new-buffer "ixio")) url)
+    (shell-command-on-region beg end
+                             (format "curl -F 'ext:1=%s' -F 'f:1=<-' ix.io 2>/dev/null"
+                                     (file-name-extension (or (buffer-file-name) " .txt")))
+                             output)
+    (setq url (string-trim-right (with-current-buffer output (buffer-string))))
+    (kill-buffer output)
+    url))
+
+(screenshot--def-action text-upload
+  "Upload the current selection (BEG-END) as text via `screenshot-text-upload-fn'."
+  (message "Uploading text...")
+  (let ((content (string-trim-right (buffer-substring beg end)))
+        url)
+    (with-temp-buffer
+      (insert content)
+      (when screenshot-remove-indent-p
+        (indent-rigidly (point-min) (point-max)
+                        (- (indent-rigidly--current-indentation
+                            (point-min) (point-max)))))
+      (setq url (funcall screenshot-text-upload-fn (point-min) (point-max)))
+      (gui-select-text url)
+      (message "Screenshot uploaded, link copied to clipboard (%s)" url))))
 
 ;;; Screenshot transient
 
@@ -551,10 +566,14 @@ Note: you have to define this yourself, there is no default."
    (screenshot--set-shadow-offset-horizontal)
    (screenshot--set-shadow-offset-vertical)]
   ["Action"
-   ("s" "Save" screenshot-save)
-   ("S" "Save as" screenshot-save-as)
-   ("c" "Copy" screenshot-copy)
-   ("u" "Upload" screenshot-upload)])
+   ["Save"
+    ("s" "Save image" screenshot-save)
+    ("S" "Save image as" screenshot-save-as)]
+   ["Upload"
+    ("u" "Image" screenshot-upload)
+    ("U" "Text" screenshot-text-upload)]
+   ["Copy"
+    ("c" "Image" screenshot-copy)]])
 
 (provide 'screenshot)
 ;;; screenshot.el ends here
