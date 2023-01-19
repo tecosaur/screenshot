@@ -41,9 +41,6 @@
   "Customise group for Screenshot."
   :group 'convenience)
 
-(defvar screenshot--buffer nil
-  "The buffer last used to create a screenshot.")
-
 (defcustom screenshot-buffer-creation-hook nil
   "Hook run after creating a buffer for screenshots.
 Run after hardcoded setup, but before the screenshot is captured."
@@ -119,7 +116,7 @@ READER."
 (screenshot--define-infix
     "-i" remove-indent-p
     "Remove indent in selection"
-    'boolean nil
+    'boolean t
   (not screenshot-remove-indent-p))
 
 (declare-function counsel-fonts "ext:counsel-fonts")
@@ -237,10 +234,20 @@ return a URL.")
 (defun screenshot-text-upload (beg end)
   "Upload the region from BEG to END, and copy the upload URL to the clipboard."
   (message "Uploading text...")
-  (let ((url
-         (funcall screenshot-text-upload-function beg end)))
-    (gui-select-text url)
-    (message "Screenshot uploaded, link copied to clipboard (%s)" url)))
+  (screenshot--set-screenshot-region beg end)
+  (let ((content (string-trim-right
+                  (buffer-substring screenshot--region-beginning
+                                    screenshot--region-end)))
+        url)
+    (with-temp-buffer
+      (insert content)
+      (when screenshot-remove-indent-p
+        (indent-rigidly (point-min) (point-max)
+                        (- (indent-rigidly--current-indentation
+                            (point-min) (point-max)))))
+      (setq url (funcall screenshot-text-upload-function (point-min) (point-max)))
+      (gui-select-text url)
+      (message "Screenshot uploaded, link copied to clipboard (%s)" url))))
 
 (defun screenshot-ixio-upload (beg end)
   "Upload the region from BEG to END to ix.io, and return the URL."
@@ -271,9 +278,7 @@ and the line number of the first line of the region."
     (when (= beg (point))
       (setq beg (line-beginning-position)))
     (goto-char end)
-    (when (string-match-p "\\`\\s-*$" (thing-at-point 'line))
-      (forward-line -1)
-      (setq end (line-end-position))))
+    (setq end (1+ (re-search-backward "[^[:space:]\n]"))))
   (setq screenshot--region-beginning beg
         screenshot--region-end end
         screenshot--first-line-number (line-number-at-pos beg)))
@@ -305,14 +310,11 @@ and the line number of the first line of the region."
   "Insert text from BEG to END in the current buffer, into the screenshot buffer."
   ;; include indentation if `beg' is where indentation starts
   (let ((s (string-trim-right (buffer-substring beg end))))
-    (with-current-buffer (setq screenshot--buffer screenshot--text-only-buffer)
+    (with-current-buffer screenshot--text-only-buffer
       (buffer-face-set :family screenshot-font-family
                        :height (* 10 screenshot-font-size))
       (erase-buffer)
       (insert s)
-      (indent-rigidly (point-min) (point-max)
-                      (- (indent-rigidly--current-indentation
-                          (point-min) (point-max))))
       (current-buffer))))
 
 (defun screenshot--narrowed-clone-buffer (beg end)
@@ -331,9 +333,8 @@ This buffer then then set up to be used for a screenshot."
 
 (defun screenshot--max-line-length (&optional buffer)
   "Find the maximum line length in BUFFER."
-  (let ((buffer (or buffer (current-buffer)))
-        (max-line 0))
-    (with-current-buffer buffer
+  (let ((max-line 0))
+    (with-current-buffer (or buffer (current-buffer))
       (save-excursion
         (goto-char (point-min))
         (dotimes (line-1 (count-lines (point-min) (point-max)))
@@ -363,22 +364,48 @@ This buffer then then set up to be used for a screenshot."
 (defun screenshot--process ()
   "Perform the screenshot process.
 
-Create a buffer for the screenshot, use `x-export-frames' to create the image,
-and process it."
-  (setq screenshot--buffer
-        (if screenshot-text-only-p
-            (screenshot--format-text-only-buffer screenshot--region-beginning screenshot--region-end)
-          (screenshot--narrowed-clone-buffer screenshot--region-beginning screenshot--region-end)))
+More specifically, this function will:
+- Create a buffer for the screenshot
+- Save it as an image
+- Process the image"
+  (let ((ss-buf
+         (if screenshot-text-only-p
+             (screenshot--format-text-only-buffer
+              screenshot--region-beginning screenshot--region-end)
+           (screenshot--narrowed-clone-buffer
+            screenshot--region-beginning screenshot--region-end)))
+        (indent-level 0))
+    (when screenshot-remove-indent-p
+      (with-current-buffer ss-buf
+        (setq indent-level (indent-rigidly--current-indentation
+                            (point-min) (point-max)))
+        (when (> indent-level 0)
+          (indent-rigidly (point-min) (point-max)
+                          (- indent-level)))))
+    (unwind-protect
+        (progn
+          (screenshot--process-buffer ss-buf)
+          (screenshot--post-process screenshot--tmp-file))
+      (when (and screenshot-remove-indent-p
+                 (not screenshot-text-only-p)
+                 (> indent-level 0))
+        (with-current-buffer ss-buf
+          (indent-rigidly (point-min) (point-max)
+                          indent-level)))
+      (unless (eq ss-buf screenshot--text-only-buffer)
+        (kill-buffer ss-buf)))))
 
+(defun screenshot--process-buffer (ss-buf)
+  "Save a screenshot of SS-BUF to `screenshot--tmp-file' via `x-export-frames'."
   (let* (before-make-frame-hook
          delete-frame-functions
          (width (max screenshot-min-width
                      (min screenshot-max-width
                           (screenshot--max-line-length
-                           screenshot--buffer))))
-         (height (screenshot--displayed-lines screenshot--buffer))
+                           ss-buf))))
+         (height (screenshot--displayed-lines ss-buf))
          (frame (posframe-show
-                 screenshot--buffer
+                 ss-buf
                  :position (point-min)
                  :internal-border-width screenshot-border-width
                  :min-width width
@@ -390,7 +417,7 @@ and process it."
                  :lines-truncate screenshot-truncate-lines-p
                  :poshandler #'posframe-poshandler-point-bottom-left-corner
                  :hidehandler #'posframe-hide)))
-    (with-current-buffer screenshot--buffer
+    (with-current-buffer ss-buf
       (setq-local display-line-numbers screenshot-line-numbers-p)
       (when screenshot-text-only-p
         (setq-local display-line-numbers-offset
@@ -400,10 +427,7 @@ and process it."
       (redraw-frame frame)
       (with-temp-file screenshot--tmp-file
         (insert (x-export-frames frame 'png))))
-    (posframe-hide screenshot--buffer))
-  (unless screenshot-text-only-p
-    (kill-buffer screenshot--buffer))
-  (screenshot--post-process screenshot--tmp-file))
+    (posframe-hide ss-buf)))
 
 (defcustom screenshot-post-process-hook
   (when (executable-find "pngquant")
@@ -512,6 +536,7 @@ Note: you have to define this yourself, there is no default."
    (screenshot--set-relative-line-numbers-p)
    (screenshot--set-text-only-p)
    (screenshot--set-truncate-lines-p)
+   (screenshot--set-remove-indent-p)
    (screenshot--set-font-family)
    (screenshot--set-font-size)]
   ["Frame"
