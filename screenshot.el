@@ -75,49 +75,65 @@ The infix uses KEY and DESCRIPTION, modifies the variable
 screenshot-NAME, and is set by a reader function with body
 READER."
     (declare (indent 5) (doc-string 3))
-    `(progn
-       (defcustom ,(intern (format "screenshot-%s" name)) ,default
-         ,description
-         :type ,type
-         :group 'screenshot)
-       (transient-define-infix ,(intern (format "screenshot--set-%s" name)) ()
-         ,(format "Set `screenshot--%s' from a popup buffer." name)
-         :class 'transient-lisp-variable
-         :variable ',(intern (format "screenshot-%s" name))
-         :key ,key
-         :description ,description
-         :argument ,(format "--%s" name)
-         :reader (lambda (&rest _) ,@reader)))))
+    (let* ((infix-var (intern (format "screenshot-%s" name)))
+           (reader
+            (cond
+             ((and (not reader)
+                   (eq (cadr type) 'boolean))
+              `((not ,infix-var)))
+             ((and (memq (cadr type) '(string color number integer float))
+                   (stringp (car reader))
+                   (not (cdr reader)))
+              `((,(pcase (cadr type)
+                    ((or 'string 'color) #'read-string)
+                    ((or 'number 'integer 'float) #'read-number))
+                 ,(car reader) ,infix-var)))
+             (t reader))))
+      `(progn
+         (defcustom ,infix-var ,default
+           ,description
+           :type ,type
+           :group 'screenshot)
+         (transient-define-infix ,(intern (format "screenshot--set-%s" name)) ()
+           ,(format "Set `screenshot--%s' from a popup buffer." name)
+           :class 'transient-lisp-variable
+           :variable ',infix-var
+           :key ,key
+           :description ,description
+           :argument ,(format "--%s" name)
+           :reader (lambda (&rest _)
+                     (let ((new-value (progn ,@reader)))
+                       (if (equal new-value ,infix-var)
+                           (message "%s unchanged" ',infix-var)
+                         (prog1
+                             (customize-save-variable ',infix-var new-value)
+                           (message "New %s value saved" ',infix-var)))
+                       new-value)))))))
 
 (screenshot--define-infix
     "-n" line-numbers-p
     "Show line numbers"
-    'boolean nil
-  (not screenshot-line-numbers-p))
+    'boolean nil)
 
 (screenshot--define-infix
     "-r" relative-line-numbers-p
     "Relative line numbers within the screenshot"
-    'boolean nil
-  (not screenshot-relative-line-numbers-p))
+    'boolean nil)
 
 (screenshot--define-infix
     "-t" text-only-p
     "Use a text-only version of the buffer"
-    'boolean nil
-  (not screenshot-text-only-p))
+    'boolean nil)
 
 (screenshot--define-infix
     "-x" truncate-lines-p
     "Truncate lines beyond the screenshot width"
-    'boolean nil
-  (not screenshot-truncate-lines-p))
+    'boolean nil)
 
 (screenshot--define-infix
     "-i" remove-indent-p
     "Remove indent in selection"
-    'boolean t
-  (not screenshot-remove-indent-p))
+    'boolean t)
 
 (declare-function counsel-fonts "ext:counsel-fonts")
 
@@ -140,66 +156,56 @@ READER."
 (screenshot--define-infix
     "-fs" font-size
     "Font size (pt)"
-    'number 14
-  (read-number "Font size in pt: " screenshot-font-size))
+    'number 14 "Font size in pt: ")
 
 ;;;; Frame
 
 (screenshot--define-infix
     "-bw" border-width
     "Border width in pixels"
-    'integer 20
-  (read-number "Border width in px: " screenshot-border-width))
+    'integer 20 "Border width in px: ")
 
 (screenshot--define-infix
     "-br" radius
     "Rounded corner radius"
-    'integer 10
-  (read-number "Border radius in px: " screenshot-radius))
+    'integer 10 "Border radius in px: ")
 
 (screenshot--define-infix
     "-w" min-width
     "Minimum width, in columns"
-    'integer 40
-  (read-number "Minimum width (columns): " screenshot-min-width))
+    'integer 40 "Minimum width (columns): ")
 
 (screenshot--define-infix
     "-W" max-width
     "Maximum width, in columns"
-    'integer 120
-  (read-number "Maximum width (columns): " screenshot-max-width))
+    'integer 120 "Maximum width (columns): ")
 
 ;;;; Shadow
 
 (screenshot--define-infix
     "-sr" shadow-radius
     "Radius of the shadow in pixels"
-    'integer 12
-  (read-number "Shadow width in px: " screenshot-shadow-radius))
+    'integer 12 "Shadow width in px: ")
 
 (screenshot--define-infix
     "-si" shadow-intensity
     "Intensity of the shadow"
-    'integer 80
-  (read-number "Shadow intensity: " screenshot-shadow-intensity))
+    'integer 80 "Shadow intensity: ")
 
 (screenshot--define-infix
     "-sc" shadow-color
     "Color of the shadow"
-    'color "#333"
-  (read-string "Shadow color: " screenshot-shadow-color))
+    'color "#333" "Shadow color: ")
 
 (screenshot--define-infix
     "-sx" shadow-offset-horizontal
     "Shadow horizontal offset"
-    'integer -8
-  (read-number "Shadow horizontal offset in px: " screenshot-shadow-offset-horizontal))
+    'integer -8 "Shadow horizontal offset in px: ")
 
 (screenshot--define-infix
     "-sy" shadow-offset-vertical
     "Shadow vertical offset"
-    'integer 5
-  (read-number "Shadow vertical offset in px: " screenshot-shadow-offset-vertical))
+    'integer 5 "Shadow vertical offset in px: ")
 
 ;;; Main function
 
