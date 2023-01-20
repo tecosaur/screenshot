@@ -512,8 +512,8 @@ If BODY starts with :no-img then `screenshot--process' is not called."
         (indent-rigidly (point-min) (point-max)
                         (- (indent-rigidly--current-indentation
                             (point-min) (point-max)))))
-      (gui-select-text (buffer-substring-no-properties
-                        (point-min) (point-max))))))
+      (kill-new (buffer-substring-no-properties
+                 (point-min) (point-max))))))
 
 (defcustom screenshot-upload-fn nil
   "Function or string which provides a method to upload a file.
@@ -534,7 +534,7 @@ Note: you have to define this yourself, there is no default."
              ((pred functionp) (funcall screenshot-upload-fn screenshot--tmp-file))
              ((pred stringp) (string-trim-right (shell-command-to-string (format screenshot-upload-fn screenshot--tmp-file))))
              (_ (error "Upload function is not a function or string!")))))
-      (gui-select-text url)
+      (kill-new url)
       (message "Screenshot uploaded, link copied to clipboard (%s)"
                (propertize url 'face 'link))))
   (delete-file screenshot--tmp-file))
@@ -570,7 +570,7 @@ return a URL."
                         (- (indent-rigidly--current-indentation
                             (point-min) (point-max)))))
       (setq url (funcall screenshot-text-upload-fn (point-min) (point-max)))
-      (gui-select-text url)
+      (kill-new url)
       (message "Screenshot uploaded, link copied to clipboard (%s)"
                (propertize url 'face 'link)))))
 
