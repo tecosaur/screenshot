@@ -586,6 +586,7 @@ return a URL."
 ;;; Screenshot transient
 
 (transient-define-prefix screenshot-transient ()
+  "Transient that should only ever be invoked by `screenshot'."
   ["Code"
    (screenshot--set-line-numbers-p)
    (screenshot--set-relative-line-numbers-p)
