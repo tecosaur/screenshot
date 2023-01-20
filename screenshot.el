@@ -399,12 +399,15 @@ More specifically, this function will:
 
 (defcustom screenshot-post-process-hook
   (when (executable-find "pngquant")
-    (list (defun screenshot--compress-file (file)
-            (call-process "pngquant" nil nil nil "-f" "-o" file file))))
+    (list #'screenshot--compress-file))
   "Functions to be called on the output file after processing.
 Must take a single argument, the file name, and operate in-place."
   :type 'function
   :group 'screenshot)
+
+(defun screenshot--compress-file (file)
+  "Compress FILE with pngquant."
+  (call-process "pngquant" nil nil nil "--force" "--skip-if-larger" "--output" file file))
 
 (defun screenshot--post-process (file)
   "Apply any image post-processing to FILE."
