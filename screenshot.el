@@ -83,16 +83,15 @@ READER."
                    (eq (cadr type) 'boolean))
               `((not ,infix-var)))
              ((and (memq (cadr type) '(string color number integer float))
-                   (stringp (car reader))
-                   (not (cdr reader)))
+                   (not reader))
               `((,(pcase (cadr type)
                     ((or 'string 'color) #'read-string)
                     ((or 'number 'integer 'float) #'read-number))
-                 ,(car reader) ,infix-var)))
+                 ,(concat description ": ") ,infix-var)))
              (t reader))))
       `(progn
          (defcustom ,infix-var ,default
-           ,description
+           ,(concat description ".")
            :type ,type
            :group 'screenshot)
          (transient-define-infix ,(intern (format "screenshot--set-%s" name)) ()
@@ -171,57 +170,57 @@ READER."
 
 (screenshot--define-infix
     "-fs" font-size
-    "Font size (pt)"
-    'number 14 "Font size in pt: ")
+    "Font size in pt"
+    'number 14)
 
 ;;;; Frame
 
 (screenshot--define-infix
     "-bw" border-width
-    "Border width in pixels"
-    'integer 20 "Border width in px: ")
+    "Border width in px"
+    'integer 20)
 
 (screenshot--define-infix
     "-br" radius
-    "Rounded corner radius"
-    'integer 10 "Border radius in px: ")
+    "Rounded corner radius in px"
+    'integer 10)
 
 (screenshot--define-infix
     "-w" min-width
     "Minimum width, in columns"
-    'integer 40 "Minimum width (columns): ")
+    'integer 40)
 
 (screenshot--define-infix
     "-W" max-width
     "Maximum width, in columns"
-    'integer 120 "Maximum width (columns): ")
+    'integer 120)
 
 ;;;; Shadow
 
 (screenshot--define-infix
     "-sr" shadow-radius
-    "Radius of the shadow in pixels"
-    'integer 12 "Shadow width in px: ")
+    "Radius of the shadow in px"
+    'integer 12)
 
 (screenshot--define-infix
     "-si" shadow-intensity
-    "Intensity of the shadow"
-    'integer 80 "Shadow intensity: ")
+    "Intensity of the shadow (0-100)"
+    'integer 80)
 
 (screenshot--define-infix
     "-sc" shadow-color
-    "Color of the shadow"
-    'color "#333" "Shadow color: ")
+    "Color of the shadow (hex string)"
+    'color "#333")
 
 (screenshot--define-infix
     "-sx" shadow-offset-horizontal
-    "Shadow horizontal offset"
-    'integer -8 "Shadow horizontal offset in px: ")
+    "Shadow horizontal offset in px"
+    'integer -8)
 
 (screenshot--define-infix
     "-sy" shadow-offset-vertical
-    "Shadow vertical offset"
-    'integer 5 "Shadow vertical offset in px: ")
+    "Shadow vertical offset in px"
+    'integer 5)
 
 ;;; Main function
 
