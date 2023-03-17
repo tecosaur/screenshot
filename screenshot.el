@@ -141,6 +141,11 @@ READER."
     "Set \"description\" metadata to text in region"
     'boolean t)
 
+(screenshot--define-infix
+    "-mt" buffer-name-as-image-title-p
+    "Set image \"title\" metadata to `buffer-name'"
+    'boolean t)
+
 (declare-function counsel-fonts "ext:counsel-fonts")
 
 (declare-function ivy-read "ext:ivy-read")
@@ -453,6 +458,8 @@ Must take a single argument, the file name, and operate in-place."
                          (list "-set" "description" (buffer-substring
                                                      screenshot--region-beginning
                                                      screenshot--region-end)))
+                    (and screenshot-buffer-name-as-image-title-p
+                         (list "-set" "title" (buffer-name)))
                     (list
                      "-background" "none"
                      "-layers" "merge"
@@ -620,7 +627,8 @@ return a URL."
    (screenshot--set-shadow-offset-horizontal)
    (screenshot--set-shadow-offset-vertical)]
   ["Metadata"
-   (screenshot--set-code-as-image-description-p)]
+   (screenshot--set-code-as-image-description-p)
+   (screenshot--set-buffer-name-as-image-title-p)]
   ["Action"
    ["Save"
     ("s" "Save image" screenshot-save)
