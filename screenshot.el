@@ -146,6 +146,11 @@ READER."
     "Set image \"title\" metadata to `buffer-name'"
     'boolean t)
 
+(screenshot--define-infix
+    "-ma" user-full-name-as-image-author-p
+    "Set image \"author\" metadata to `user-full-name'"
+    'boolean nil)
+
 (declare-function counsel-fonts "ext:counsel-fonts")
 
 (declare-function ivy-read "ext:ivy-read")
@@ -460,6 +465,8 @@ Must take a single argument, the file name, and operate in-place."
                                                      screenshot--region-end)))
                     (and screenshot-buffer-name-as-image-title-p
                          (list "-set" "title" (buffer-name)))
+                    (and screenshot-user-full-name-as-image-author-p
+                         (list "-set" "author" user-full-name))
                     (list
                      "-background" "none"
                      "-layers" "merge"
@@ -628,7 +635,8 @@ return a URL."
    (screenshot--set-shadow-offset-vertical)]
   ["Metadata"
    (screenshot--set-code-as-image-description-p)
-   (screenshot--set-buffer-name-as-image-title-p)]
+   (screenshot--set-buffer-name-as-image-title-p)
+   (screenshot--set-user-full-name-as-image-author-p)]
   ["Action"
    ["Save"
     ("s" "Save image" screenshot-save)
