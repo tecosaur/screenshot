@@ -136,6 +136,11 @@ READER."
     "Remove indent in selection"
     'boolean t)
 
+(screenshot--define-infix
+    "-md" code-as-image-description-p
+    "Set \"description\" metadata to text in region"
+    'boolean t)
+
 (declare-function counsel-fonts "ext:counsel-fonts")
 
 (declare-function ivy-read "ext:ivy-read")
@@ -444,6 +449,10 @@ Must take a single argument, the file name, and operate in-place."
                                                  screenshot-shadow-offset-horizontal
                                                  screenshot-shadow-offset-vertical)
                                ")" "+swap"))
+                    (and screenshot-code-as-image-description-p
+                         (list "-set" "description" (buffer-substring
+                                                     screenshot--region-beginning
+                                                     screenshot--region-end)))
                     (list
                      "-background" "none"
                      "-layers" "merge"
@@ -610,6 +619,8 @@ return a URL."
    (screenshot--set-shadow-color)
    (screenshot--set-shadow-offset-horizontal)
    (screenshot--set-shadow-offset-vertical)]
+  ["Metadata"
+   (screenshot--set-code-as-image-description-p)]
   ["Action"
    ["Save"
     ("s" "Save image" screenshot-save)
