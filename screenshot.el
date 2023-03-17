@@ -29,13 +29,14 @@
 ;;; Commentary:
 
 ;; Convenience package for creating images of the current region or buffer.
-;; Requires `imagemagick' for some visual post-processing, and `xclip' for
-;; copying images to the clipboard.
+;; Requires `imagemagick' to set metadata and for some visual post-processing,
+;; and `xclip' for copying images to the clipboard.
 
 ;;; Code:
 
 (require 'transient)
 (require 'posframe)
+(require 'lisp-mnt)
 
 (defgroup screenshot ()
   "Customise group for Screenshot."
@@ -446,6 +447,9 @@ Must take a single argument, the file name, and operate in-place."
                     (list
                      "-background" "none"
                      "-layers" "merge"
+                     "-set" "software" (format "Emacs %s; screenshot.el %s"
+                                               emacs-version
+                                               (lm-version (symbol-file 'screenshot)))
                      file))))))
       (unless (eq result 0)
         (error "Could not apply imagemagick commands to image (exit code %d)" result))))
