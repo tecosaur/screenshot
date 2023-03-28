@@ -414,8 +414,8 @@ More specifically, this function will:
     (posframe-hide ss-buf)))
 
 (defcustom screenshot-post-process-hook
-  (when (executable-find "pngquant")
-    (list #'screenshot--compress-file))
+  (append (and (executable-find "pngquant") (list #'screenshot--compress-file))
+          (list #'screenshot--set-metadata))
   "Functions to be called on the output file after processing.
 Must take a single argument, the file name, and operate in-place."
   :type 'function
@@ -424,6 +424,26 @@ Must take a single argument, the file name, and operate in-place."
 (defun screenshot--compress-file (file)
   "Compress FILE with pngquant."
   (call-process "pngquant" nil nil nil "--force" "--skip-if-larger" "--output" file file))
+
+(defun screenshot--set-metadata (file)
+  "Set requested metadata on FILE."
+  (let ((result (apply #'call-process "convert" nil nil nil
+                       (append (list file)
+                               (and screenshot-code-as-image-description-p
+                                    (list "-set" "description" (buffer-substring
+                                                                screenshot--region-beginning
+                                                                screenshot--region-end)))
+                               (and screenshot-buffer-name-as-image-title-p
+                                    (list "-set" "title" (buffer-name)))
+                               (and screenshot-user-full-name-as-image-author-p
+                                    (list "-set" "author" user-full-name))
+                               (list
+                                "-set" "software" (format "Emacs %s; screenshot.el %s"
+                                                          emacs-version
+                                                          (lm-version (symbol-file 'screenshot)))
+                                file)))))
+    (unless (zerop result)
+      (error "Could not apply imagemagick commands to image (exit code %d)" result))))
 
 (defun screenshot--post-process (file)
   "Apply any image post-processing to FILE."
@@ -459,20 +479,9 @@ Must take a single argument, the file name, and operate in-place."
                                                  screenshot-shadow-offset-horizontal
                                                  screenshot-shadow-offset-vertical)
                                ")" "+swap"))
-                    (and screenshot-code-as-image-description-p
-                         (list "-set" "description" (buffer-substring
-                                                     screenshot--region-beginning
-                                                     screenshot--region-end)))
-                    (and screenshot-buffer-name-as-image-title-p
-                         (list "-set" "title" (buffer-name)))
-                    (and screenshot-user-full-name-as-image-author-p
-                         (list "-set" "author" user-full-name))
                     (list
                      "-background" "none"
                      "-layers" "merge"
-                     "-set" "software" (format "Emacs %s; screenshot.el %s"
-                                               emacs-version
-                                               (lm-version (symbol-file 'screenshot)))
                      file))))))
       (unless (eq result 0)
         (error "Could not apply imagemagick commands to image (exit code %d)" result))))
