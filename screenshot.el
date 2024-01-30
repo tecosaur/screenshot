@@ -308,7 +308,7 @@ This buffer then then set up to be used for a screenshot."
   (let ((hl (bound-and-true-p hl-line-mode)))
     (when hl (hl-line-mode -1))
     (prog1
-        (with-current-buffer (make-indirect-buffer (current-buffer) " *screenshot-clone" t t)
+        (with-current-buffer (make-indirect-buffer (current-buffer) " *screenshot-clone" t)
           (narrow-to-region beg end)
           (screenshot--setup-buffer)
           (buffer-face-set :family screenshot-font-family
