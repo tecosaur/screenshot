@@ -539,10 +539,19 @@ If BODY starts with :no-img then `screenshot--process' is not called."
 
 (screenshot--def-action copy
   "Copy the current selection (BEG-END) as an image to the clipboard."
-  (call-process "xclip" nil nil nil
-                "-selection" "clipboard"
-                "-target" "image/png"
-                "-in" screenshot--tmp-file)
+  (let ((wayland-p (getenv "WAYLAND_DISPLAY")))
+    (cond
+     ((and wayland-p (executable-find "wl-copy"))
+      (call-process "wl-copy" screenshot--tmp-file nil nil
+                    "--type" "image/png"))
+     ((and (not wayland-p) (executable-find "xclip"))
+      (call-process "xclip" nil nil nil
+                    "-selection" "clipboard"
+                    "-target" "image/png"
+                    "-in" screenshot--tmp-file))
+     (t
+      (user-error "Missing `%s' executable, needed to copy images to the clipboard"
+                  (if wayland-p "wl-copy" "xclip")))))
   (delete-file screenshot--tmp-file)
   (message "Screenshot copied"))
 
